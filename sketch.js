@@ -127,7 +127,10 @@ var caro = function (p) {
 				if (this.currentMove == "X") this.currentMove = "O";
 				else this.currentMove = "X";
 				
-				document.getElementById('luotdi').innerHTML = `<p style="display:inline; color: ` + (this.currentMove == "X" ? "#f00" : "#0f0") + `">` + this.currentMove + `</p>`;
+				var luotdi = document.getElementById('luotdi')
+				luotdi.innerHTML = this.currentMove;
+				luotdi.style.color = (this.currentMove=="X"?"#f00":"#0f0");
+
 			}
 		}
 

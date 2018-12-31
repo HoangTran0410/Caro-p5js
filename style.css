@@ -38,3 +38,8 @@ h2.title {
 #undo:hover {
     background-color: #000;
 }
+
+#luotdi {
+    padding: 0;
+    font-size: 150px;
+}
