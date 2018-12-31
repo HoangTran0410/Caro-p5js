@@ -1,0 +1,32 @@
+* {
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 0;
+    color: #eee
+}
+
+html, body {
+    background-color: black;
+}
+
+h2.title {
+    padding: 5px;
+    text-align: center;
+    color: aliceblue;
+}
+
+#game {
+    background-color: #111;
+}
+
+#screen {
+    cursor: pointer;
+}
+
+#screen, #info {
+    display: inline-block;
+}
+
+#luotdi {
+
+}
