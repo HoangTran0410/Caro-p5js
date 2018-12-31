@@ -1,15 +1,15 @@
 var caro = function (p) {
 	p.table;
+	p.cols = 30;
 	p.rows = 20;
-	p.cols = 20;
 	p.game;
 
 	p.setup = function () {
-		p.createCanvas(650, 650);
+		p.createCanvas(900, 600);
 		p.rectMode(p.CORNER); // all position is CORNER , top-left
 
-		var wCell = p.width / p.rows;
-		var hCell = p.height / p.cols;
+		var wCell = p.width / p.cols;
+		var hCell = p.height / p.rows;
 		p.table = new Table(0, 0, p.rows, p.cols, wCell, hCell);
 		p.game = new Game('O');
 	}
