@@ -2,9 +2,7 @@ var caro = function (p) {
 	p.table;
 	p.rows = 20;
 	p.cols = 20;
-
-	p.currentCell;
-	p.pre = "X";
+	p.game;
 
 	p.setup = function () {
 		p.createCanvas(650, 650);
@@ -12,23 +10,18 @@ var caro = function (p) {
 
 		var wCell = p.width / p.rows;
 		var hCell = p.height / p.cols;
-		table = new Table(0, 0, p.rows, p.cols, wCell, hCell);
-
-		p.nextMove();
+		p.table = new Table(0, 0, p.rows, p.cols, wCell, hCell);
+		p.game = new Game('O');
 	}
 
 	p.draw = function () {
 		p.background(30);
-
-		table.run();
+		p.table.run();
 	}
 
 	p.mousePressed = function () {
-		if (p.currentCell && p.mouseIsInside(0, p.height, 0, p.width)) {
-			if (p.currentCell.stage == '') {
-				p.currentCell.stage = (p.pre == "X" ? "O" : "X");
-				p.nextMove();
-			}
+		if (p.mouseIsInside(0, p.height, 0, p.width)) {
+			p.game.move();
 		}
 	}
 
@@ -36,18 +29,7 @@ var caro = function (p) {
 		return p.mouseX > left && p.mouseX < right && p.mouseY > top && p.mouseY < bottom;
 	}
 
-	p.nextMove = function () {
-		document.getElementById('luotdi').innerHTML = `<p style="display:inline; color: ` + (p.pre == "X" ? "#f00" : "#0f0") + `">` + p.pre + `</p>`;
-		if (p.pre == "X") p.pre = "O";
-		else p.pre = "X";
-	}
-
-	// ======================== DOM html ==============================
-
-
-
 	// ======================== Classes Js ===============================
-
 	class Cell {
 		constructor(x, y, w, h) {
 			this.pos = p.createVector(x, y);
@@ -60,7 +42,7 @@ var caro = function (p) {
 			if (this.mouseIsHover()) {
 				p.fill(0);
 				p.stroke(150);
-				p.currentCell = this;
+				p.game.currentCell = this;
 			} else {
 				p.noFill();
 				p.stroke(70);
@@ -130,9 +112,30 @@ var caro = function (p) {
 		}
 	}
 
-	class Player {
-		constructor() {
+	class Game {
+		constructor(firstMove) {
+			this.currentMove = firstMove;
+			this.history = [];
+			this.currentCell;
+		}
 
+		move() {
+			if(this.currentCell && this.currentCell.stage == '') {
+				this.currentCell.stage = this.currentMove;
+				this.history.push(p.table.cells.indexOf(this.currentCell));
+
+				if (this.currentMove == "X") this.currentMove = "O";
+				else this.currentMove = "X";
+				
+				document.getElementById('luotdi').innerHTML = `<p style="display:inline; color: ` + (this.currentMove == "X" ? "#f00" : "#0f0") + `">` + this.currentMove + `</p>`;
+			}
+		}
+
+		undo() {
+			if(this.history.length) {
+				var beforeMove = this.history.pop();
+				p.table.cells[beforeMove].stage = '';
+			}
 		}
 	}
 }

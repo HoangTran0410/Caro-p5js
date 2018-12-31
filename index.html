@@ -21,10 +21,11 @@
     <div id="game">
         <div id="screen">
             <script>
-                new p5(caro, 'screen');
+                var _p5Instance = new p5(caro, 'screen');
             </script>
         </div>
         <div id="info">
+            <button id="undo" onclick="_p5Instance.game.undo()">Undo</button>
             <h3>Lượt đi của: <span id="luotdi">O</span></h3>
         </div>
     </div>
