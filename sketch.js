@@ -31,7 +31,8 @@ var caro = function (p) {
 
 	// ======================== Classes Js ===============================
 	class Cell {
-		constructor(x, y, w, h) {
+		constructor(id, x, y, w, h) {
+			this.id = id;
 			this.pos = p.createVector(x, y);
 			this.size = p.createVector(w, h);
 
@@ -40,37 +41,46 @@ var caro = function (p) {
 
 		show() {
 			if (this.mouseIsHover()) {
-				p.fill(0);
-				p.stroke(150);
 				p.game.currentCell = this;
+
+				if(this.stage == '') {
+					var c = p.game.currentMove;
+					var col = (c=="X"?"#700":"#070");
+					this.print(c, col, 3);
+				}
+
 			} else {
 				p.noFill();
-				p.stroke(70);
+				p.stroke(60);
 			}
-			
+
 			p.rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
 			if (this.stage != '') {
-				var strWei = 3;
-
-				p.noFill();
-				p.strokeWeight(strWei);
-
 				switch (this.stage) {
 					case 'X':
-						p.stroke(255, 0, 0);
-						p.line(this.pos.x + strWei / 2, this.pos.y + strWei / 2, this.pos.x + this.size.x - strWei / 2, this.pos.y + this.size.y - strWei / 2);
-						p.line(this.pos.x + this.size.x - strWei / 2, this.pos.y + strWei / 2, this.pos.x + strWei / 2, this.pos.y + this.size.y - strWei / 2);
+						this.print('X', [255, 0, 0], 3);
 						break;
 
 					case 'O':
-						p.stroke(0, 255, 0);
-						p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - strWei / 2, this.size.y - strWei / 2);
+						this.print('O', [0, 255, 0], 3);
 						break;
 				}
-
-				p.strokeWeight(1);
 			}
+		}
+
+		print(char, col, strWei) {
+			p.noFill();
+			p.strokeWeight(strWei);
+			if(char == 'X') {
+				p.stroke(col);
+				p.line(this.pos.x + strWei / 2, this.pos.y + strWei / 2, this.pos.x + this.size.x - strWei / 2, this.pos.y + this.size.y - strWei / 2);
+				p.line(this.pos.x + this.size.x - strWei / 2, this.pos.y + strWei / 2, this.pos.x + strWei / 2, this.pos.y + this.size.y - strWei / 2);
+			} else {
+				p.stroke(col);
+				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - strWei / 2, this.size.y - strWei / 2);
+			}
+			p.strokeWeight(1);
 		}
 
 		mouseIsHover() {
@@ -88,6 +98,7 @@ var caro = function (p) {
 	class Table {
 		constructor(x, y, rows, cols, wCell, hCell) {
 			this.pos = p.createVector(x, y);
+			this.size = p.createVector(cols, rows);
 			this.sizeCell = p.createVector(wCell, hCell);
 			this.cells = [];
 
@@ -97,7 +108,7 @@ var caro = function (p) {
 		createTable(rows, cols) {
 			for (var i = 0; i < rows; i++) {
 				for (var j = 0; j < cols; j++) {
-					this.cells.push(new Cell(this.pos.x + j * this.sizeCell.x,
+					this.cells.push(new Cell(p.createVector(i, j), this.pos.x + j * this.sizeCell.x,
 						this.pos.y + i * this.sizeCell.y,
 						this.sizeCell.x,
 						this.sizeCell.y));
@@ -120,24 +131,24 @@ var caro = function (p) {
 		}
 
 		move() {
-			if(this.currentCell && this.currentCell.stage == '') {
+			if (this.currentCell && this.currentCell.stage == '') {
 				this.currentCell.stage = this.currentMove;
-				this.history.push(p.table.cells.indexOf(this.currentCell));
-
-				if (this.currentMove == "X") this.currentMove = "O";
-				else this.currentMove = "X";
-				
-				var luotdi = document.getElementById('luotdi')
-				luotdi.innerHTML = this.currentMove;
-				luotdi.style.color = (this.currentMove=="X"?"#f00":"#0f0");
-
+				this.history.push(this.currentCell.id);
+				this.changePlayer();
 			}
 		}
 
+		changePlayer() {
+			if (this.currentMove == "X") this.currentMove = "O";
+			else this.currentMove = "X";
+		}
+
 		undo() {
-			if(this.history.length) {
-				var beforeMove = this.history.pop();
+			if (this.history.length) {
+				var id = this.history.pop();
+				var beforeMove = id.x*p.table.size.x + id.y;
 				p.table.cells[beforeMove].stage = '';
+				this.changePlayer();
 			}
 		}
 	}
