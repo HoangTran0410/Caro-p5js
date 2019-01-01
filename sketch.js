@@ -122,7 +122,7 @@ var caro = function (p) {
 		}
 
 		getCellAt(x, y) {
-			if (x < 0 || x > this.size.x || y < 0 || y > this.size.y) return false;
+			if (x < 0 || x >= this.size.x || y < 0 || y >= this.size.y) return false;
 			return this.cells[y * this.size.x + x];
 		}
 
@@ -182,100 +182,125 @@ var caro = function (p) {
 		}
 
 		checkWin(cell, tableCaro) {
-			var from, to;
+			var from, to, temp;
 			var count;
 
 			// ============ check chieu ngang =============
-			count = -1; // bù cho 2 lần cộng stage của cell ở 2 for
+			count = 1; // bù cho 2 lần cộng stage của cell ở 2 for
 
 			// count to left
 			from = cell;
-			while (from.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(from.id.x - 1, from.id.y);
+
+				if (!temp || temp.stage != cell.stage) break;
+				from = temp;
 				count++;
-				from = tableCaro.getCellAt(from.id.x - 1, from.id.y);
 			}
 
 			// count to right
 			to = cell;
-			while (to.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(to.id.x + 1, to.id.y);
+
+				if (!temp || temp.stage != cell.stage) break;
+				to = temp;
 				count++;
-				to = tableCaro.getCellAt(to.id.x + 1, to.id.y);
 			}
 
 			if (count == 5) {
-				for (var i = 1; i <= 5; i++) {
+				for (var i = 0; i < 5; i++) {
 					tableCaro.getCellAt(from.id.x + i, from.id.y).hightlight = true;
 				}
 				return true;
 			}
 
 			// ============ check chieu doc ============
-			count = -1;
+			count = 1;
 
 			// count to top
 			from = cell;
-			while (from.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(from.id.x, from.id.y - 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				from = temp;
 				count++;
-				from = tableCaro.getCellAt(from.id.x, from.id.y - 1);
 			}
+
 
 			// count to right
 			to = cell;
-			while (to.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(to.id.x, to.id.y + 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				to = temp;
 				count++;
-				to = tableCaro.getCellAt(to.id.x, to.id.y + 1);
 			}
 
 			if (count == 5) {
-				for (var i = 1; i <= 5; i++) {
+				for (var i = 0; i < 5; i++) {
 					tableCaro.getCellAt(from.id.x, from.id.y + i).hightlight = true;
 				}
 				return true;
 			}
 
 			// ============ check cheo trai sang phai ============
-			count = -1;
+			count = 1;
 
 			// count to top-left
 			from = cell;
-			while (from.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(from.id.x - 1, from.id.y - 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				from = temp;
 				count++;
-				from = tableCaro.getCellAt(from.id.x - 1, from.id.y - 1);
 			}
 
 			// count to right-bottom
 			to = cell;
-			while (to.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(to.id.x + 1, to.id.y + 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				to = temp;
 				count++;
-				to = tableCaro.getCellAt(to.id.x + 1, to.id.y + 1);
 			}
 
 			if (count == 5) {
-				for (var i = 1; i <= 5; i++) {
+				for (var i = 0; i < 5; i++) {
 					tableCaro.getCellAt(from.id.x + i, from.id.y + i).hightlight = true;
 				}
 				return true;
 			}
 
 			// ============ check cheo phai sang trai ============
-			count = -1;
+			count = 1;
 
 			// count to top-right
 			from = cell;
-			while (from.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(from.id.x + 1, from.id.y - 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				from = temp;
 				count++;
-				from = tableCaro.getCellAt(from.id.x + 1, from.id.y - 1);
 			}
 
 			// count to bottom-left
 			to = cell;
-			while (to.stage == cell.stage) {
+			while (true) {
+				temp = tableCaro.getCellAt(to.id.x - 1, to.id.y + 1);
+
+				if (!temp || temp.stage != cell.stage) break;
+				to = temp;
 				count++;
-				to = tableCaro.getCellAt(to.id.x - 1, to.id.y + 1);
 			}
 
 			if (count == 5) {
-				for (var i = 1; i <= 5; i++) {
+				for (var i = 0; i < 5; i++) {
 					tableCaro.getCellAt(from.id.x - i, from.id.y + i).hightlight = true;
 				}
 				return true;
