@@ -1,25 +1,28 @@
 var caro = function (p) {
 	p.table;
-	p.cols = 30;
-	p.rows = 20;
 	p.game;
+
+	p.reset = function (cols, rows, firstmove) {
+		var wCell = p.width / cols;
+		var hCell = p.height / rows;
+
+		p.table = new Table(0, 0, rows, cols, wCell, hCell);
+		p.game = new Game(firstmove);
+	}
 
 	p.setup = function () {
 		p.createCanvas(900, 600);
 		p.rectMode(p.CORNER); // all position is CORNER , top-left
 
-		var wCell = p.width / p.cols;
-		var hCell = p.height / p.rows;
-		p.table = new Table(0, 0, p.rows, p.cols, wCell, hCell);
-		p.game = new Game('O');
+		p.reset(30, 20, 'O');
 	}
 
 	p.draw = function () {
-		p.background(30);
+		p.background(30, 100);
 		p.table.run();
 	}
 
-	p.mousePressed = function () {
+	p.mouseClicked = function () {
 		if (p.mouseIsInside(0, p.height, 0, p.width)) {
 			p.game.move();
 		}
@@ -37,17 +40,22 @@ var caro = function (p) {
 			this.size = p.createVector(w, h);
 
 			this.stage = '';
+			this.hightlight = false;
 		}
 
 		show() {
 			if (this.mouseIsHover()) {
 				p.game.currentCell = this;
-
-				if(this.stage == '') {
+				if (this.stage == '') {
 					var c = p.game.currentMove;
-					var col = (c=="X"?"#700":"#070");
+					var col = (c == "X" ? "#700" : "#070");
 					this.print(c, col, 3);
 				}
+
+			}
+
+			if (this.hightlight) {
+				p.fill(100);
 
 			} else {
 				p.noFill();
@@ -72,13 +80,15 @@ var caro = function (p) {
 		print(char, col, strWei) {
 			p.noFill();
 			p.strokeWeight(strWei);
-			if(char == 'X') {
+
+			var del = strWei * 2;
+			if (char == 'X') {
 				p.stroke(col);
-				p.line(this.pos.x + strWei / 2, this.pos.y + strWei / 2, this.pos.x + this.size.x - strWei / 2, this.pos.y + this.size.y - strWei / 2);
-				p.line(this.pos.x + this.size.x - strWei / 2, this.pos.y + strWei / 2, this.pos.x + strWei / 2, this.pos.y + this.size.y - strWei / 2);
+				p.line(this.pos.x + del, this.pos.y + del, this.pos.x + this.size.x - del, this.pos.y + this.size.y - del);
+				p.line(this.pos.x + this.size.x - del, this.pos.y + del, this.pos.x + del, this.pos.y + this.size.y - del);
 			} else {
 				p.stroke(col);
-				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - strWei / 2, this.size.y - strWei / 2);
+				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - del, this.size.y - del);
 			}
 			p.strokeWeight(1);
 		}
@@ -108,12 +118,17 @@ var caro = function (p) {
 		createTable(rows, cols) {
 			for (var i = 0; i < rows; i++) {
 				for (var j = 0; j < cols; j++) {
-					this.cells.push(new Cell(p.createVector(i, j), this.pos.x + j * this.sizeCell.x,
+					this.cells.push(new Cell(p.createVector(j, i), this.pos.x + j * this.sizeCell.x,
 						this.pos.y + i * this.sizeCell.y,
 						this.sizeCell.x,
 						this.sizeCell.y));
 				}
 			}
+		}
+
+		getCellAt(x, y) {
+			if (x < 0 || x > this.size.x || y < 0 || y > this.size.y) return false;
+			return this.cells[y * this.size.x + x];
 		}
 
 		run() {
@@ -135,6 +150,19 @@ var caro = function (p) {
 				this.currentCell.stage = this.currentMove;
 				this.history.push(this.currentCell.id);
 				this.changePlayer();
+
+				// remove old hightlight
+				var oldpos = this.history[this.history.length - 2];
+				if (oldpos) p.table.getCellAt(oldpos.x, oldpos.y).hightlight = false;
+
+				// add new hightlight 
+				var pos = this.history[this.history.length - 1];
+				if (pos) p.table.getCellAt(pos.x, pos.y).hightlight = true;
+
+				// check win
+				if (this.checkWin(this.currentCell, p.table)) {
+					console.log(this.currentCell.stage + ' Win.');
+				}
 			}
 		}
 
@@ -146,10 +174,111 @@ var caro = function (p) {
 		undo() {
 			if (this.history.length) {
 				var id = this.history.pop();
-				var beforeMove = id.x*p.table.size.x + id.y;
-				p.table.cells[beforeMove].stage = '';
+				p.table.getCellAt(id.x, id.y).stage = '';
 				this.changePlayer();
 			}
+		}
+
+		checkWin(cell, tableCaro) {
+			var from, to;
+			var count;
+
+			// ============ check chieu ngang =============
+			count = -1; // bù cho 2 lần cộng stage của cell ở 2 for
+
+			// count to left
+			from = cell;
+			while (from.stage == cell.stage) {
+				count++;
+				from = tableCaro.getCellAt(from.id.x - 1, from.id.y);
+			}
+
+			// count to right
+			to = cell;
+			while (to.stage == cell.stage) {
+				count++;
+				to = tableCaro.getCellAt(to.id.x + 1, to.id.y);
+			}
+
+			if (count == 5) {
+				for (var i = 1; i <= 5; i++) {
+					tableCaro.getCellAt(from.id.x + i, from.id.y).hightlight = true;
+				}
+				return true;
+			}
+
+			// ============ check chieu doc ============
+			count = -1;
+
+			// count to top
+			from = cell;
+			while (from.stage == cell.stage) {
+				count++;
+				from = tableCaro.getCellAt(from.id.x, from.id.y - 1);
+			}
+
+			// count to right
+			to = cell;
+			while (to.stage == cell.stage) {
+				count++;
+				to = tableCaro.getCellAt(to.id.x, to.id.y + 1);
+			}
+
+			if (count == 5) {
+				for (var i = 1; i <= 5; i++) {
+					tableCaro.getCellAt(from.id.x, from.id.y + i).hightlight = true;
+				}
+				return true;
+			}
+
+			// ============ check cheo trai sang phai ============
+			count = -1;
+
+			// count to top-left
+			from = cell;
+			while (from.stage == cell.stage) {
+				count++;
+				from = tableCaro.getCellAt(from.id.x - 1, from.id.y - 1);
+			}
+
+			// count to right-bottom
+			to = cell;
+			while (to.stage == cell.stage) {
+				count++;
+				to = tableCaro.getCellAt(to.id.x + 1, to.id.y + 1);
+			}
+
+			if (count == 5) {
+				for (var i = 1; i <= 5; i++) {
+					tableCaro.getCellAt(from.id.x + i, from.id.y + i).hightlight = true;
+				}
+				return true;
+			}
+
+			// ============ check cheo phai sang trai ============
+			count = -1;
+
+			// count to top-right
+			from = cell;
+			while (from.stage == cell.stage) {
+				count++;
+				from = tableCaro.getCellAt(from.id.x + 1, from.id.y - 1);
+			}
+
+			// count to bottom-left
+			to = cell;
+			while (to.stage == cell.stage) {
+				count++;
+				to = tableCaro.getCellAt(to.id.x - 1, to.id.y + 1);
+			}
+
+			if (count == 5) {
+				for (var i = 1; i <= 5; i++) {
+					tableCaro.getCellAt(from.id.x - i, from.id.y + i).hightlight = true;
+				}
+				return true;
+			}
+			return false;
 		}
 	}
 }
