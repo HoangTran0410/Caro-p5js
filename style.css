@@ -33,7 +33,10 @@ html, body {
 }
 
 .player img {
-    margin: 0 10px;
     width: 150px;
     height: 150px;;
+}
+
+.player i {
+    font-size: 150px;
 }
