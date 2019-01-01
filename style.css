@@ -3,35 +3,37 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    color: #eee
+    color: #eee;
+    text-align: center;
 }
 
 html, body {
     background-color: black;
 }
 
-h2.title {
+.game {
+    width: 100%;
+}
+
+.title {
+    font-size: 30px;
     padding: 5px;
-    text-align: center;
-    color: aliceblue;
 }
 
-#game {
-    display: flex;
-    background-color: #111;
-}
-
-#screen {
-    cursor: pointer;
-}
-
-#info button {
+.control button {
+    font-size: 24px;
     background-color: #333;
     padding: 5px 10px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
-#info button:hover {
-    background-color: #000;
+.control button:hover {
+    background-color: #111;
+}
+
+.player img {
+    margin: 0 10px;
+    width: 150px;
+    height: 150px;;
 }

@@ -45,7 +45,7 @@ var caro = function (p) {
 
 		show() {
 			if (this.mouseIsHover()) {
-				p.game.currentCell = this;
+				p.game.mouseOnCell = this;
 				if (this.stage == '') {
 					var c = p.game.currentMove;
 					var col = (c == "X" ? "#700" : "#070");
@@ -62,11 +62,11 @@ var caro = function (p) {
 			if (this.stage != '') {
 				switch (this.stage) {
 					case 'X':
-						this.print('X', [255, 0, 0], 3);
+						this.print('X', [220, 0, 0], 3);
 						break;
 
 					case 'O':
-						this.print('O', [0, 255, 0], 3);
+						this.print('O', [0, 220, 0], 3);
 						break;
 				}
 			}
@@ -76,14 +76,14 @@ var caro = function (p) {
 			p.noFill();
 			p.strokeWeight(strWei);
 
-			var del = strWei * 2;
+			var del = strWei * 3;
 			if (char == 'X') {
 				p.stroke(color);
 				p.line(this.pos.x + del, this.pos.y + del, this.pos.x + this.size.x - del, this.pos.y + this.size.y - del);
 				p.line(this.pos.x + this.size.x - del, this.pos.y + del, this.pos.x + del, this.pos.y + this.size.y - del);
 			} else {
 				p.stroke(color);
-				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - del, this.size.y - del);
+				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - del * 1.5, this.size.y - del * 1.5);
 			}
 			p.strokeWeight(1);
 		}
@@ -137,22 +137,20 @@ var caro = function (p) {
 		constructor(firstMove) {
 			this.currentMove = firstMove;
 			this.history = [];
+			this.mouseOnCell;
 			this.currentCell;
 		}
 
 		move() {
-			if (this.currentCell && this.currentCell.stage == '') {
-				this.currentCell.stage = this.currentMove;
+			if (this.mouseOnCell && this.mouseOnCell.stage == '') {
+				this.mouseOnCell.stage = this.currentMove;
+
+				if (this.currentCell) this.currentCell.hightlight = false;
+				this.currentCell = this.mouseOnCell;
+				this.currentCell.hightlight = true;
+
 				this.history.push(this.currentCell.id);
 				this.changePlayer();
-
-				// remove old hightlight
-				var oldpos = this.history[this.history.length - 2];
-				if (oldpos) p.table.getCellAt(oldpos.x, oldpos.y).hightlight = false;
-
-				// add new hightlight 
-				var pos = this.history[this.history.length - 1];
-				if (pos) p.table.getCellAt(pos.x, pos.y).hightlight = true;
 
 				// check win
 				if (this.checkWin(this.currentCell, p.table)) {
@@ -169,7 +167,16 @@ var caro = function (p) {
 		undo() {
 			if (this.history.length) {
 				var id = this.history.pop();
-				p.table.getCellAt(id.x, id.y).stage = '';
+				var undoCell = p.table.getCellAt(id.x, id.y);
+				if (undoCell) {
+					undoCell.stage = '';
+					undoCell.hightlight = false; // remove old hightlight
+
+					var pre_id = this.history[this.history.length - 1];
+					this.currentCell = p.table.getCellAt(pre_id.x, pre_id.y);
+					this.currentCell.hightlight = true;
+				}
+
 				this.changePlayer();
 			}
 		}

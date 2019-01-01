@@ -7,6 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Caro</title>
 
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
 
     <script src="library/p5.min.js"></script>
@@ -17,18 +19,38 @@
 </head>
 
 <body>
-    <h2 class="title">CARO P5js</h2>
-    <div id="game">
-        <div id="screen">
-            <script>
-                var _p5Instance = new p5(caro, 'screen');
-            </script>
-        </div>
-        <div id="info">
-            <button id="reset" onclick="if(window.confirm('Xác nhận xóa toàn bộ nước đi và chơi lại ?')) _p5Instance.reset(30, 20, 'O')">Reset</button>
-            <button id="undo" onclick="_p5Instance.game.undo()">Undo</button>
-        </div>
-    </div>
+
+    <table class="game">
+        <tr>
+            <td colspan="3" class="title">
+                <h2 class="title">CARO p5js</h2>
+            </td>
+        </tr>
+        <tr>
+            <td class="player">
+                <img src="https://image.flaticon.com/icons/png/512/149/149071.png" alt="">
+            </td>
+            <td id="cnv">
+                <script>
+                    var _p5Instance = new p5(caro, 'cnv');
+                </script>
+            </td>
+            <td class="player">
+                <img src="https://image.flaticon.com/icons/png/512/149/149071.png" alt="">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3" class="control">
+                <button id="reset" onclick="if(window.confirm('Bạn có chắc muốn tạo ván mới ?')) _p5Instance.reset(30, 20, 'O')">
+                    <i class="far fa-sticky-note"></i> New
+                </button>
+                <button id="undo" onclick="_p5Instance.game.undo()">
+                    <i class="fas fa-undo-alt"></i> Undo
+                </button>
+            </td>
+        </tr>
+    </table>
+
 </body>
 
 </html>
