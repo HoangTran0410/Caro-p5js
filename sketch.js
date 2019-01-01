@@ -54,14 +54,9 @@ var caro = function (p) {
 
 			}
 
-			if (this.hightlight) {
-				p.fill(100);
-
-			} else {
-				p.noFill();
-				p.stroke(60);
-			}
-
+			if (this.hightlight) p.fill(100);
+			else p.noFill();
+			p.stroke(60);
 			p.rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
 			if (this.stage != '') {
@@ -77,17 +72,17 @@ var caro = function (p) {
 			}
 		}
 
-		print(char, col, strWei) {
+		print(char, color, strWei) {
 			p.noFill();
 			p.strokeWeight(strWei);
 
 			var del = strWei * 2;
 			if (char == 'X') {
-				p.stroke(col);
+				p.stroke(color);
 				p.line(this.pos.x + del, this.pos.y + del, this.pos.x + this.size.x - del, this.pos.y + this.size.y - del);
 				p.line(this.pos.x + this.size.x - del, this.pos.y + del, this.pos.x + del, this.pos.y + this.size.y - del);
 			} else {
-				p.stroke(col);
+				p.stroke(color);
 				p.ellipse(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2, this.size.x - del, this.size.y - del);
 			}
 			p.strokeWeight(1);
