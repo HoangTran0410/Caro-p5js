@@ -11,10 +11,17 @@
         crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
 
-    <script src="library/p5.min.js"></script>
-    <script src="library/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/addons/p5.dom.min.js"></script>
 
-    <script src="sketch.js"></script>
+    <script src="themes.js"></script>
+    <script src="main.js"></script>
+
+    <script>
+        window.onload = function () {
+            _p5Instance = new p5(caro, 'cnv');
+        };
+    </script>
 
 </head>
 
@@ -31,11 +38,7 @@
                 <!-- <img src="https://image.flaticon.com/icons/png/512/149/149071.png" alt=""> -->
                 <i class="fa fa-user-circle"></i>
             </td>
-            <td id="cnv">
-                <script>
-                    var _p5Instance = new p5(caro, 'cnv');
-                </script>
-            </td>
+            <td id="cnv"></td>
             <td class="player">
                 <!-- <img src="https://image.flaticon.com/icons/png/512/149/149071.png" alt=""> -->
                 <i class="fa fa-user-circle"></i>
@@ -43,12 +46,14 @@
         </tr>
         <tr>
             <td colspan="3" class="control">
-                <button onclick="if(window.confirm('Bạn có chắc muốn tạo ván mới ?')) _p5Instance.reset(30, 20, 'O')" title="Ván mới">
+                <button onclick="if(window.confirm('Bạn có chắc muốn tạo ván mới ?')) game.reset()" title="Ván mới">
                     <i class="far fa-sticky-note"></i> New
                 </button>
-                <button onclick="_p5Instance.game.undo()" title="Đánh lại">
+                <button onclick="game.undo()" title="Đánh lại">
                     <i class="fas fa-undo-alt"></i> Undo
                 </button>
+                <select name="chooseTheme" id="" onchange="applyTheme(this.value)">
+                </select>
             </td>
         </tr>
     </table>
