@@ -1,4 +1,6 @@
 var caro = function (p) {
+    p.timeClick = 0;
+
     p.setup = function () {
         p.createCanvas(30 * 30, 20 * 30);
         p.pixelDensity(1);
@@ -6,8 +8,8 @@ var caro = function (p) {
         applyTheme("dark");
         addToSelect();
 
-        game = new CaroTable(20, 30, 30);
-        // socket = new SocketIO("http://localhost:8080");
+        game = new CaroTable(50, 50, 30);
+        // socket = new SocketIO("https://carop5js.herokuapp.com/");
     }
 
     p.draw = function () {
@@ -15,22 +17,33 @@ var caro = function (p) {
         game.run();
     }
 
-    p.mouseClicked = function () {
-        game.clicked();
+    p.mousePressed = function () {
+        p.timeClick = p.millis();
+    }
+
+    p.mouseReleased = function () {
+        if (p.millis() - p.timeClick < 200) {
+            game.clicked();
+        }
+    }
+
+    p.mouseDragged = function () {
+        game.focusTarget = false;
+        game.pos.add(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
     }
 
     class CaroTable {
         constructor(rows, cols, cSize) {
-            this.pos = {
-                x: 0,
-                y: 0
-            }; // corner position
+            this.pos = p.createVector(0, 0); // corner position
             this.rows = rows;
             this.cols = cols;
             this.cellSize = cSize;
             this.gra = p.createGraphics(cols * cSize, rows * cSize);
             this.tableData = [];
             this.history = [];
+
+            this.target = p.createVector(0, 0);
+            this.focusTarget = false;
 
             this.drawGrid();
             this.resetData();
@@ -56,6 +69,7 @@ var caro = function (p) {
         }
 
         reset() {
+            this.pos = p.createVector(0, 0);
             this.history = [];
             this.createTable(this.rows, this.cols, this.cellSize);
             this.resetData();
@@ -79,8 +93,8 @@ var caro = function (p) {
             }
         }
 
-        getDataAt(x, y) {
-            if (this.tableData[y]) return this.tableData[y][x];
+        getDataAt(col, row) {
+            if (this.tableData[row]) return this.tableData[row][col];
             return '';
         }
 
@@ -92,8 +106,8 @@ var caro = function (p) {
         }
 
         getIndexCellAt(posx, posy) {
-            var col = p.floor(posx / this.cellSize);
-            var row = p.floor(posy / this.cellSize);
+            var col = p.floor((posx - this.pos.x) / this.cellSize);
+            var row = p.floor((posy - this.pos.y) / this.cellSize);
 
             if (col < 0 || col >= this.cols) col = -1;
             if (row < 0 || row >= this.rows) row = -1;
@@ -111,20 +125,20 @@ var caro = function (p) {
 
         getPosCellAt(col, row) {
             return {
-                "x": col * this.cellSize,
-                "y": row * this.cellSize
-            }
+                "x": col * this.cellSize + this.pos.x,
+                "y": row * this.cellSize + this.pos.y
+            };
         }
 
         getCellAtIndex(col, row) {
             return {
-                "x": col * this.cellSize,
-                "y": row * this.cellSize,
+                "x": col * this.cellSize + this.pos.x,
+                "y": row * this.cellSize + this.pos.y,
                 "data": this.getDataAt(col, row)
             };
         }
 
-        switchChat(char) {
+        switchChar(char) {
             return (char == 'X' ? 'O' : 'X');
         }
 
@@ -132,24 +146,38 @@ var caro = function (p) {
             return this.history[this.history.length - 1];
         }
 
+        focusToCell(col, row) {
+            var pos = this.getPosCellAt(col, row);
+            this.target = p.createVector(this.pos.x - pos.x + p.width / 2, this.pos.y - pos.y + p.height / 2);
+            this.focusTarget = true;
+        }
+
         clicked() {
-            var index = this.getIndexCellAt(p.mouseX, p.mouseY);
-            if (index.col != -1 && index.row != -1) {
-                if (this.getDataAt(index.col, index.row) == ' ') {
-                    var preMove = this.getPreMove();
-                    if (!preMove) preMove = {
-                        data: 'X'
-                    };
+            if (p.mouseX < p.width && p.mouseX > 0 && p.mouseY < p.height && p.mouseY > 0) {
+                var index = this.getIndexCellAt(p.mouseX, p.mouseY);
+                if (index.col != -1 && index.row != -1) {
+                    if (this.getDataAt(index.col, index.row) == ' ') {
+                        var preMove = this.getPreMove();
+                        if (!preMove) preMove = {
+                            data: 'X'
+                        };
 
-                    var nextChar = this.switchChat(preMove.data);
-                    this.setDataAt(index.col, index.row, nextChar);
-                    this.history.push({
-                        col: index.col,
-                        row: index.row,
-                        data: nextChar
-                    });
+                        var nextChar = this.switchChar(preMove.data);
+                        this.setDataAt(index.col, index.row, nextChar);
+                        this.history.push({
+                            col: index.col,
+                            row: index.row,
+                            data: nextChar
+                        });
 
-                    if(this.checkWin(index.col, index.row)) alert(nextChar + ' win');
+                        this.focusToCell(index.col, index.row);
+
+                        if (this.checkWin(index.col, index.row)) {
+                            if (window.confirm(nextChar + ' win. New game?')) {
+                                this.reset();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -160,29 +188,30 @@ var caro = function (p) {
                 this.setDataAt(preMove.col, preMove.row, ' ');
                 this.drawGrid();
                 this.drawData();
+
+                if (this.history.length) {
+                    var pre = this.getPreMove();
+                    this.focusToCell(pre.col, pre.row);
+                }
             }
         }
 
         show() {
-            p.image(this.gra, 0, 0, p.width, p.height);
+            p.image(this.gra, this.pos.x, this.pos.y, this.gra.width, this.gra.height);
         }
 
         showMousePos() {
             var cell = this.getCellAtPos(p.mouseX, p.mouseY);
-            p.fill(theme.cell_hover_bg_color);
-            p.stroke(theme.cell_hover_stroke_color);
-            p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
-
             var index = this.getIndexCellAt(p.mouseX, p.mouseY);
             if (index.col != -1 && index.row != -1) {
-                var left = cell.x - index.col * this.cellSize,
-                    right = cell.x + (this.cols - index.col) * this.cellSize,
-                    top = cell.y - index.row * this.cellSize,
-                    bottom = cell.y + (this.rows - index.row) * this.cellSize;
+                p.fill(theme.cell_hover_bg_color);
+                p.stroke(theme.cell_hover_stroke_color);
+                p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
+
                 p.fill(theme.focus_cell_bg_color);
                 p.stroke(theme.focus_cell_stroke_color);
-                p.rect(cell.x, top, this.cellSize, bottom);
-                p.rect(left, cell.y, right, this.cellSize);
+                p.rect(cell.x, this.pos.y, this.cellSize, this.gra.height);
+                p.rect(this.pos.x, cell.y, this.gra.width, this.cellSize);
 
                 if (this.getDataAt(index.col, index.row) == ' ') {
                     var preMove = this.getPreMove();
@@ -193,7 +222,7 @@ var caro = function (p) {
                     p.fill(theme.cell_hover_bg_color);
                     p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
 
-                    var nextChar = this.switchChat(preMove.data);
+                    var nextChar = this.switchChar(preMove.data);
                     this.printChar(nextChar, index.col, index.row, true, p);
                 }
             }
@@ -211,7 +240,12 @@ var caro = function (p) {
         }
 
         printChar(char, col, row, alpha, cnv) {
-            var c = this.getPosCellAt(col, row);
+            var c;
+            if (cnv) c = this.getPosCellAt(col, row);
+            else c = {
+                "x": col * this.cellSize,
+                "y": row * this.cellSize
+            };
             var strWei = 3;
             var del = strWei * 3;
 
@@ -247,7 +281,7 @@ var caro = function (p) {
                 delcol: 1,
                 delrow: 0
             }
-            if(this.check(cell, ngangFrom, ngangTo)) return true;
+            if (this.check(cell, ngangFrom, ngangTo)) return true;
 
             // ============ check chieu doc ============
             var docFrom = {
@@ -259,7 +293,7 @@ var caro = function (p) {
                 delrow: 1
             }
 
-            if(this.check(cell, docFrom, docTo)) return true;
+            if (this.check(cell, docFrom, docTo)) return true;
 
             // ============ check cheo trai sang phai ============
             var cheoTPFrom = {
@@ -270,7 +304,7 @@ var caro = function (p) {
                 delcol: 1,
                 delrow: 1
             };
-            if(this.check(cell, cheoTPFrom, cheoTPTo)) return true;
+            if (this.check(cell, cheoTPFrom, cheoTPTo)) return true;
 
             // ============ check cheo phai sang trai ============
             var cheoPTFrom = {
@@ -281,7 +315,7 @@ var caro = function (p) {
                 delcol: -1,
                 delrow: 1
             }
-            if(this.check(cell, cheoPTFrom, cheoPTTO)) return true;
+            if (this.check(cell, cheoPTFrom, cheoPTTO)) return true;
             return false;
         }
 
@@ -318,14 +352,44 @@ var caro = function (p) {
                 count++;
             }
 
-            if(count == 5) return {"from": from, "to": to};
+            if (count == 5) return {
+                "from": from,
+                "to": to
+            };
             return false;
+        }
+
+        control_move() {
+            if (p.keyIsDown(p.LEFT_ARROW)) {
+                this.pos.add(5, 0);
+                this.focusTarget = false;
+            }
+            if (p.keyIsDown(p.RIGHT_ARROW)) {
+                this.pos.add(-5, 0);
+                this.focusTarget = false;
+            }
+            if (p.keyIsDown(p.UP_ARROW)) {
+                this.pos.add(0, 5);
+                this.focusTarget = false;
+            }
+            if (p.keyIsDown(p.DOWN_ARROW)) {
+                this.pos.add(0, -5);
+                this.focusTarget = false;
+            }
         }
 
         run() {
             this.showMousePos();
             this.hightlightPreMove();
             this.show();
+            this.control_move();
+
+            if (this.focusTarget) {
+                this.pos = p5.Vector.lerp(this.pos, this.target || this.pos, 0.03);
+            }
+
+            this.pos.x = p.constrain(this.pos.x, -this.gra.width + this.cellSize, p.width - this.cellSize);
+            this.pos.y = p.constrain(this.pos.y, -this.gra.height + this.cellSize, p.height - this.cellSize);
         }
     }
 
