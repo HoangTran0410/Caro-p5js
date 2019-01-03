@@ -69,6 +69,7 @@ var caro = function (p) {
         }
 
         reset() {
+            this.focusTarget = false;
             this.pos = p.createVector(0, 0);
             this.history = [];
             this.createTable(this.rows, this.cols, this.cellSize);
