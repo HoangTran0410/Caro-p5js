@@ -148,6 +148,8 @@ var caro = function (p) {
                         row: index.row,
                         data: nextChar
                     });
+
+                    if(this.checkWin(index.col, index.row)) alert(nextChar + ' win');
                 }
             }
         }
@@ -226,6 +228,98 @@ var caro = function (p) {
                 cnv.ellipse(c.x + this.cellSize / 2, c.y + this.cellSize / 2, this.cellSize - del * 1.5, this.cellSize - del * 1.5);
             }
             cnv.strokeWeight(1);
+        }
+
+        checkWin(col, row) {
+            var currentData = this.getDataAt(col, row);
+            var cell = {
+                "col": col,
+                "row": row,
+                "data": currentData
+            };
+
+            // ============ check chieu ngang =============
+            var ngangFrom = {
+                delcol: -1,
+                delrow: 0
+            };
+            var ngangTo = {
+                delcol: 1,
+                delrow: 0
+            }
+            if(this.check(cell, ngangFrom, ngangTo)) return true;
+
+            // ============ check chieu doc ============
+            var docFrom = {
+                delcol: 0,
+                delrow: -1
+            };
+            var docTo = {
+                delcol: 0,
+                delrow: 1
+            }
+
+            if(this.check(cell, docFrom, docTo)) return true;
+
+            // ============ check cheo trai sang phai ============
+            var cheoTPFrom = {
+                delcol: -1,
+                delrow: -1
+            };
+            var cheoTPTo = {
+                delcol: 1,
+                delrow: 1
+            };
+            if(this.check(cell, cheoTPFrom, cheoTPTo)) return true;
+
+            // ============ check cheo phai sang trai ============
+            var cheoPTFrom = {
+                delcol: 1,
+                delrow: -1
+            }
+            var cheoPTTO = {
+                delcol: -1,
+                delrow: 1
+            }
+            if(this.check(cell, cheoPTFrom, cheoPTTO)) return true;
+            return false;
+        }
+
+        check(currentCell, deltaFrom, deltaTo) {
+            var currentData = currentCell.data;
+            var count = 1;
+            var from, to, temp, data;
+
+            // count to pre
+            from = currentCell;
+            while (true) {
+                temp = {
+                    col: from.col + deltaFrom.delcol,
+                    row: from.row + deltaFrom.delrow
+                };
+                data = this.getDataAt(temp.col, temp.row);
+
+                if (data != currentData) break;
+                from = temp;
+                count++;
+            }
+
+            // count to next
+            to = currentCell;
+            while (true) {
+                temp = {
+                    col: to.col + deltaTo.delcol,
+                    row: to.row + deltaTo.delrow
+                }
+                data = this.getDataAt(temp.col, temp.row);
+
+                if (data != currentData) break;
+                to = temp;
+                count++;
+            }
+
+            if(count == 5) return {"from": from, "to": to};
+            return false;
         }
 
         run() {
