@@ -1,36 +1,43 @@
-var caro = function (p) {
+var caro = function(p) {
     p.timeClick = 0;
 
-    p.setup = function () {
-        p.createCanvas(30 * 30, 20 * 30);
+    p.setup = function() {
+        p.createCanvas(p.windowWidth, p.windowHeight);
         p.pixelDensity(1);
 
         applyTheme("dark");
-        addToSelect();
 
-        game = new CaroTable(50, 50, 30);
+        game = new CaroTable(20, 20, 30);
+        game.moveToCenterPage();
         // socket = new SocketIO("https://carop5js.herokuapp.com/");
     }
 
-    p.draw = function () {
+    p.draw = function() {
         p.background(theme.canvas_bg_color);
         game.run();
     }
 
-    p.mousePressed = function () {
-        p.timeClick = p.millis();
+    p.mousePressed = function(e) {
+        if (e.target.matches('canvas'))
+            p.timeClick = p.millis();
     }
 
-    p.mouseReleased = function () {
-        if (p.millis() - p.timeClick < 200) {
-            game.clicked();
-        }
+    p.mouseReleased = function(e) {
+        if (e.target.matches('canvas'))
+            if (p.millis() - p.timeClick < 200) {
+                game.clicked();
+            }
     }
 
-    p.mouseDragged = function () {
+    p.mouseDragged = function() {
         game.focusTarget = false;
         game.pos.add(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
     }
+
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight, true);
+    }
+
 
     class CaroTable {
         constructor(rows, cols, cSize) {
@@ -59,6 +66,7 @@ var caro = function (p) {
         }
 
         resetData() {
+            this.tableData = [];
             for (var y = 0; y < this.rows; y++) {
                 var s = [];
                 for (var x = 0; x < this.cols; x++) {
@@ -70,10 +78,10 @@ var caro = function (p) {
 
         reset() {
             this.focusTarget = false;
-            this.pos = p.createVector(0, 0);
             this.history = [];
             this.createTable(this.rows, this.cols, this.cellSize);
             this.resetData();
+            this.moveToCenterPage();
         }
 
         drawGrid() {
@@ -92,6 +100,10 @@ var caro = function (p) {
             for (var d of this.history) {
                 this.printChar(d.data, d.col, d.row);
             }
+        }
+
+        moveToCenterPage() {
+            this.pos = p.createVector(-game.gra.width / 2 + p.width / 2, -game.gra.height / 2 + p.height / 2);
         }
 
         getDataAt(col, row) {
@@ -149,8 +161,13 @@ var caro = function (p) {
 
         focusToCell(col, row) {
             var pos = this.getPosCellAt(col, row);
-            this.target = p.createVector(this.pos.x - pos.x + p.width / 2, this.pos.y - pos.y + p.height / 2);
+            this.target = p.createVector(this.pos.x - pos.x + p.width / 2, this.pos.y - pos.y + p.height / 3);
             this.focusTarget = true;
+        }
+
+        focusToPreMove() {
+            var premove = this.getPreMove();
+            if (premove) this.focusToCell(premove.col, premove.row);
         }
 
         clicked() {
@@ -171,7 +188,7 @@ var caro = function (p) {
                             data: nextChar
                         });
 
-                        this.focusToCell(index.col, index.row);
+                        // this.focusToCell(index.col, index.row);
 
                         if (this.checkWin(index.col, index.row)) {
                             if (window.confirm(nextChar + ' win. New game?')) {
@@ -189,11 +206,7 @@ var caro = function (p) {
                 this.setDataAt(preMove.col, preMove.row, ' ');
                 this.drawGrid();
                 this.drawData();
-
-                if (this.history.length) {
-                    var pre = this.getPreMove();
-                    this.focusToCell(pre.col, pre.row);
-                }
+                this.focusToPreMove();
             }
         }
 
@@ -205,23 +218,23 @@ var caro = function (p) {
             var cell = this.getCellAtPos(p.mouseX, p.mouseY);
             var index = this.getIndexCellAt(p.mouseX, p.mouseY);
             if (index.col != -1 && index.row != -1) {
-                p.fill(theme.cell_hover_bg_color);
-                p.stroke(theme.cell_hover_stroke_color);
-                p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
 
-                p.fill(theme.focus_cell_bg_color);
-                p.stroke(theme.focus_cell_stroke_color);
+                // hightlight row-col cells
+                p.fill(theme.focus_cells_bg_color);
+                p.stroke(theme.focus_cells_stroke_color);
                 p.rect(cell.x, this.pos.y, this.cellSize, this.gra.height);
                 p.rect(this.pos.x, cell.y, this.gra.width, this.cellSize);
 
                 if (this.getDataAt(index.col, index.row) == ' ') {
+                    // hightlight focus mouse cell
+                    p.fill(theme.hover_cell_bg_color);
+                    p.stroke(theme.hover_cell_stroke_color);
+                    p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
+
                     var preMove = this.getPreMove();
                     if (!preMove) preMove = {
                         data: 'X'
                     };
-
-                    p.fill(theme.cell_hover_bg_color);
-                    p.rect(cell.x, cell.y, this.cellSize, this.cellSize);
 
                     var nextChar = this.switchChar(preMove.data);
                     this.printChar(nextChar, index.col, index.row, true, p);
@@ -237,6 +250,8 @@ var caro = function (p) {
                 p.fill(theme.hightlight_cell_bg_color);
                 p.stroke(theme.hightlight_cell_stroke_color);
                 p.rect(pos.x, pos.y, this.cellSize, this.cellSize);
+
+                this.printChar(preMove.data, preMove.col, preMove.row, false, p);
             }
         }
 
@@ -262,6 +277,7 @@ var caro = function (p) {
                 cnv.stroke(alpha ? theme.o_hover_color : theme.o_color);
                 cnv.ellipse(c.x + this.cellSize / 2, c.y + this.cellSize / 2, this.cellSize - del * 1.5, this.cellSize - del * 1.5);
             }
+
             cnv.strokeWeight(1);
         }
 
@@ -380,13 +396,13 @@ var caro = function (p) {
         }
 
         run() {
+            this.show();
             this.showMousePos();
             this.hightlightPreMove();
-            this.show();
             this.control_move();
 
             if (this.focusTarget) {
-                this.pos = p5.Vector.lerp(this.pos, this.target || this.pos, 0.03);
+                this.pos = p5.Vector.lerp(this.pos, this.target || this.pos, 0.05);
             }
 
             this.pos.x = p.constrain(this.pos.x, -this.gra.width + this.cellSize, p.width - this.cellSize);
@@ -404,7 +420,7 @@ var caro = function (p) {
         }
 
         addActionOn(name, func) {
-            this.socket.on(name, function (data) {
+            this.socket.on(name, function(data) {
                 func(data);
             })
         }
