@@ -1,5 +1,5 @@
 * {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Lato', 'Helvetica Neue', Helvetica, sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -25,14 +25,21 @@ canvas {
     width: 100%;
 }
 
+.game canvas {
+    cursor: pointer;
+}
+
 .title {
     font-size: 30px;
     padding: 5px;
     text-align: center;
+    background-color: #0002;
 }
 
 .control {
+    padding: 5px;
     text-align: center;
+    background-color: #0009;
 }
 
 .control button {
@@ -94,10 +101,10 @@ canvas {
     position: fixed;
     left: 0px;
     bottom: 5px;
-    width: 300px;
+    width: 0;
     height: 300px;
-    padding: 5px;
-    opacity: 0.6;
+    padding: 0;
+    /*opacity: 0.6;*/
     z-index: 2;
     -webkit-transition-duration: 0.3s;
     -o-transition-duration: 0.3s;
@@ -105,7 +112,7 @@ canvas {
 }
 
 #conversation {
-    background-color: rgba(51, 51, 51, 0.2);
+    background-color: rgb(51, 51, 51);
     color: white;
     width: 100%;
     height: 260px;
@@ -131,31 +138,62 @@ canvas {
 
 #typing input[type="text"] {
     font-size: 16px;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgb(0, 0, 0);
     color: white;
     border: none;
     height: 30px;
     width: 100%;
+    padding-left: 5px; 
     /*z-index: 2;*/
 }
 
-#typing input[type="submit"] {
+#typing input[type="button"] {
+    position: absolute;
+    right: 0;
+    top: 5px;
+    width: 50px;
+    height: 30px;
+
+    background-color: rgb(51, 51, 51);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#typing input[type="button"]:hover {
+    background-color: white;
+    color: black;
+}
+
+#showHideChat {
+    background-color: rgb(51, 51, 51);
+    color: white;
+    border: none;
+
     position: absolute;
     top: 5px;
     width: 50px;
     height: 30px;
     right: -55px;
-}
-
-#showHideChat {
-    background-color: rgba(51, 51, 51, 0.8);
-    color: white;
-    border: none;
-    width: 50px;
+    cursor: pointer;
 }
 
 #showHideChat:hover {
     background-color: white;
     color: black;
-    cursor: pointer;
+}
+
+#mesChuaDoc {
+    position: absolute;
+    display: none;
+    top: 0;
+    right: -60px;
+    width: 20px;
+    height: 20px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 20px;
+    border-radius: 50%;
+    color: white;
+    background-color: red;
 }

@@ -1,20 +1,159 @@
+var game;
+
 var caro = function(p) {
     p.timeClick = 0;
 
     p.setup = function() {
-        p.createCanvas(p.windowWidth, p.windowHeight);
-        p.pixelDensity(1);
+        swal({
+            title: "Xin chào!",
+            text: "Tên của bạn là?",
+            closeOnClickOutside: false,
+            closeOnEsc: false,
+            content: {
+                element: "input",
+                attributes: {
+                    placeholder: "Nhập tên....",
+                    type: "text",
+                },
+            }
+        }).then((name) => {
+            p.createCanvas(p.windowWidth, p.windowHeight);
+            p.pixelDensity(1);
 
-        applyTheme("dark");
+            applyTheme("dark");
 
-        game = new CaroTable(20, 20, 30);
-        game.moveToCenterPage();
-        // socket = new SocketIO("https://carop5js.herokuapp.com/");
+            name = name || "-khách-";
+            game = new CaroTable(30, 30, 30, name);
+            game.moveToCenterPage();
+
+            socket = io("localhost:8080");
+
+            socket.on('newConnect', function(d) {
+                console.log('new connect: ' + d);
+            })
+            socket.on('disConnect', function(d) {
+                console.log('disconnect: ' + d);
+            })
+
+            // message
+            socket.on('server_send_message', function(data) {
+                p.addMessage(data.mes, (data.id == socket.id ? 'Bạn' : data.from), true);
+                if (document.getElementById('showHideChat').value == 'Chat') {
+                    var thongbao = document.getElementById('mesChuaDoc');
+                    thongbao.innerHTML = Number(thongbao.innerHTML) + 1;
+                    thongbao.style.display = 'block';
+                }
+            })
+
+
+            // playing
+            socket.on('server_send_clicked', function(d) {
+                game.setDataAt(d.col, d.row, d.data);
+                game.history.push(d);
+            })
+            socket.on('server_send_history', function(d) {
+                game.reset();
+                game.history = d;
+                game.applyDataToTable();
+                game.drawGrid();
+                game.drawData();
+            })
+
+            // đánh lại (undo)
+            socket.on('server_send_want_undo', function(name) {
+                swal({
+                        title: "Đánh lại 1 bước?",
+                        text: name + " muốn đi lại bước vừa đánh. \nBạn có đồng ý không?",
+                        icon: "info",
+                        buttons: ["Không", "Đồng ý"]
+                            // dangerMode: true
+                    })
+                    .then((isOke) => {
+                        socket.emit('client_apcept_undo', {
+                            "apcepted": isOke,
+                            "from": game.name
+                        });
+                    });
+            })
+            socket.on('server_send_undo', function() {
+                game.undo();
+                swal("Đã chấp nhận đánh lại 1 bước.", {
+                    icon: "success",
+                });
+            })
+            socket.on('server_send_deny_undo', function(name) {
+                swal({
+                    title: 'Hủy đánh lại',
+                    text: name + " không đồng ý cho bạn đánh lại!",
+                    icon: "warning"
+                })
+            })
+
+            // ván mới
+            socket.on('server_send_want_reset', function(name) {
+                swal({
+                        title: "Ván mới?",
+                        text: name + " muốn tạo ván mới. \nBạn có đồng ý không?",
+                        icon: "info",
+                        buttons: ["Không", "Đồng ý"]
+                            // dangerMode: true
+                    })
+                    .then((isOke) => {
+                        socket.emit('client_apcept_reset', {
+                            "apcepted": isOke,
+                            "from": game.name
+                        });
+                        if (!isOke) {
+                            swal({
+                                title: "Đã hủy",
+                                text: "Đã hủy tạo ván mới.",
+                                icon: "success"
+                            })
+                        }
+                    });
+            }) 
+            socket.on('server_send_reset', function() {
+                game.reset();
+                swal("Đã tạo ván mới.", {
+                    icon: "success",
+                });
+            }) 
+            socket.on('server_send_deny_reset', function(name) {
+                swal({
+                    title: 'Hủy tạo ván mới',
+                    text: name + " không đồng ý tạo ván mới!",
+                    icon: "warning"
+                })
+            })
+
+
+            socket.on('server_send_turn', function(data) {
+                game.turn = (data != 'off');
+            }) 
+            socket.on('server_send_win', function(data) {
+                if (socket.id == data.id) {
+                    swal({
+                        title: 'Chúc mừng!',
+                        text: "Bạn đã thắng ván chơi này.",
+                        icon: "info"
+                    });
+                } else {
+                    swal({
+                        title: 'Bạn thua!',
+                        text: data.name + ' đã thắng ván chơi này',
+                        icon: "warning"
+                    });
+                }
+            })
+        })
+
     }
 
     p.draw = function() {
-        p.background(theme.canvas_bg_color);
-        game.run();
+        if (game) {
+            p.background(theme.canvas_bg_color);
+            game.run();
+        }
     }
 
     p.mousePressed = function(e) {
@@ -30,17 +169,61 @@ var caro = function(p) {
     }
 
     p.mouseDragged = function() {
-        game.focusTarget = false;
-        game.pos.add(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
+        if (game) {
+            game.focusTarget = false;
+            game.pos.add(p.mouseX - p.pmouseX, p.mouseY - p.pmouseY);
+        }
     }
 
     p.windowResized = function() {
         p.resizeCanvas(p.windowWidth, p.windowHeight, true);
     }
 
+    p.addMessage = function(mes, from, withTime, color, onclickFunc) {
+        var newMes = document.createElement('p');
+        if (color) {
+            newMes.style.backgroundColor = color;
+        }
+
+        if (withTime) {
+            var timeNode = document.createElement('span');
+            timeNode.style.color = '#ddd9';
+            var t = new Date();
+            timeNode.textContent = (withTime ? (t.getHours() + ':' + t.getMinutes() + ' ') : "");
+            newMes.appendChild(timeNode);
+        }
+
+        if (from) {
+            var fromNode = document.createElement('span');
+            // fromNode.style.fontWeight = 'bold';
+            fromNode.textContent = (from ? ('(' + from + ") ") : "");
+            newMes.appendChild(fromNode);
+        }
+
+        if (mes) {
+            var mesNode = document.createTextNode(mes);
+            newMes.appendChild(mesNode);
+        }
+
+        if (onclickFunc) {
+            newMes.addEventListener("mouseover", function() {
+                newMes.style.cursor = 'pointer';
+                newMes.style.borderWidth = "1px 0 1px 0";
+                newMes.style.borderColor = "white";
+                newMes.style.borderStyle = "dashed";
+            });
+            newMes.addEventListener("mouseout", function() {
+                newMes.style.border = "none";
+            });
+            newMes.addEventListener("click", onclickFunc);
+        }
+
+        document.getElementById('conversation').appendChild(newMes);
+        newMes.scrollIntoView();
+    }
 
     class CaroTable {
-        constructor(rows, cols, cSize) {
+        constructor(rows, cols, cSize, name) {
             this.pos = p.createVector(0, 0); // corner position
             this.rows = rows;
             this.cols = cols;
@@ -48,9 +231,11 @@ var caro = function(p) {
             this.gra = p.createGraphics(cols * cSize, rows * cSize);
             this.tableData = [];
             this.history = [];
+            this.name = name;
 
             this.target = p.createVector(0, 0);
             this.focusTarget = false;
+            this.turn = true;
 
             this.drawGrid();
             this.resetData();
@@ -80,7 +265,6 @@ var caro = function(p) {
             this.focusTarget = false;
             this.history = [];
             this.createTable(this.rows, this.cols, this.cellSize);
-            this.resetData();
             this.moveToCenterPage();
         }
 
@@ -99,6 +283,12 @@ var caro = function(p) {
         drawData() {
             for (var d of this.history) {
                 this.printChar(d.data, d.col, d.row);
+            }
+        }
+
+        applyDataToTable() {
+            for (var d of this.history) {
+                this.setDataAt(d.col, d.row, d.data);
             }
         }
 
@@ -171,7 +361,7 @@ var caro = function(p) {
         }
 
         clicked() {
-            if (p.mouseX < p.width && p.mouseX > 0 && p.mouseY < p.height && p.mouseY > 0) {
+            if (this.turn && p.mouseX < p.width && p.mouseX > 0 && p.mouseY < p.height && p.mouseY > 0) {
                 var index = this.getIndexCellAt(p.mouseX, p.mouseY);
                 if (index.col != -1 && index.row != -1) {
                     if (this.getDataAt(index.col, index.row) == ' ') {
@@ -182,18 +372,19 @@ var caro = function(p) {
 
                         var nextChar = this.switchChar(preMove.data);
                         this.setDataAt(index.col, index.row, nextChar);
-                        this.history.push({
+                        var dataClicked = {
                             col: index.col,
                             row: index.row,
                             data: nextChar
-                        });
+                        };
+                        this.history.push(dataClicked);
+                        socket.emit('client_clicked', dataClicked);
 
                         // this.focusToCell(index.col, index.row);
+                        var isWin = this.checkWin(index.col, index.row)
+                        if (isWin) {
 
-                        if (this.checkWin(index.col, index.row)) {
-                            if (window.confirm(nextChar + ' win. New game?')) {
-                                this.reset();
-                            }
+                            socket.emit('client_send_win', game.name);
                         }
                     }
                 }
@@ -219,11 +410,13 @@ var caro = function(p) {
             var index = this.getIndexCellAt(p.mouseX, p.mouseY);
             if (index.col != -1 && index.row != -1) {
 
-                // hightlight row-col cells
-                p.fill(theme.focus_cells_bg_color);
-                p.stroke(theme.focus_cells_stroke_color);
-                p.rect(cell.x, this.pos.y, this.cellSize, this.gra.height);
-                p.rect(this.pos.x, cell.y, this.gra.width, this.cellSize);
+                if (this.turn) {
+                    // hightlight row-col cells
+                    p.fill(theme.focus_cells_bg_color);
+                    p.stroke(theme.focus_cells_stroke_color);
+                    p.rect(cell.x, this.pos.y, this.cellSize, this.gra.height);
+                    p.rect(this.pos.x, cell.y, this.gra.width, this.cellSize);
+                }
 
                 if (this.getDataAt(index.col, index.row) == ' ') {
                     // hightlight focus mouse cell
@@ -237,8 +430,19 @@ var caro = function(p) {
                     };
 
                     var nextChar = this.switchChar(preMove.data);
-                    this.printChar(nextChar, index.col, index.row, true, p);
+                    if (this.turn) this.printChar(nextChar, index.col, index.row, true, p);
+
+                    // if (index != this.preCellHover) {
+                    //     this.preCellHover = index;
+                    //     socket.emit('client_send_hover', this.preCellHover);
+                    // }
                 }
+            }
+        }
+
+        showOtherPlayerMousePos() {
+            if (this.otherPlayerPos) {
+                this.printChar('X')
             }
         }
 
@@ -409,20 +613,34 @@ var caro = function(p) {
             this.pos.y = p.constrain(this.pos.y, -this.gra.height + this.cellSize, p.height - this.cellSize);
         }
     }
+}
 
-    class SocketIO {
-        constructor(link) {
-            this.socket = io(link); //"http://localhost:8080"
-        }
+function resetGame() {
+    swal({
+            title: "Chắc chắn?",
+            text: "Bạn có chắc muốn tạo ván mới?",
+            icon: "warning",
+            buttons: ["Hủy", "Tạo"]
+        })
+        .then((isOke) => {
+            if (isOke) {
+                socket.emit('client_send_want_reset', game.name);
 
-        sendToServer(name, data) {
-            this.socket.emit(name, data);
-        }
+                swal({
+                    title: "Đang chờ...",
+                    text: "Đang chờ người kia đồng ý tạo ván mới.",
+                    icon: "success",
+                })
+            }
+        })
+}
 
-        addActionOn(name, func) {
-            this.socket.on(name, function(data) {
-                func(data);
-            })
-        }
-    }
+function undoGame() {
+    socket.emit('client_send_want_undo', game.name);
+
+    swal({
+        title: "Đang chờ...",
+        text: "Đang chờ người kia đồng ý cho đánh lại",
+        icon: "success"
+    })
 }
