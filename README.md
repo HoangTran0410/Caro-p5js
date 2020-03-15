@@ -2,6 +2,8 @@
 
 Multiplayer game made with [NodeJs](https://nodejs.org/en/), [Socket.io](https://socket.io/) and [p5.js](https://p5js.org/)
 
+Link: [Play](https://carop5js.herokuapp.com/) now (vietnamese)
+
 ## Running Locally
 
 Make sure you have [Node.js](http://nodejs.org/) 
