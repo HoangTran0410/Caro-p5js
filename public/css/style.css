@@ -1,0 +1,72 @@
+* {
+    font-family: 'Lato', 'Helvetica Neue', Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+*:focus {
+    outline: none !important;
+}
+
+body {
+    margin: 0 auto;
+    max-width: 1000px;
+    overscroll-behavior-y: contain;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+.before-game {
+    position: relative;
+}
+
+.game {
+    width: 100%;
+    display: none;
+}
+
+.control-game,
+.turn {
+    padding: 5px;
+    text-align: center;
+    background-color: #0009;
+}
+
+.control-game button {
+    font-size: 24px;
+    /* background-color: #222; */
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 100
+}
+
+.turn span{
+    font-weight: bold;
+    color: #ff09;
+}
+
+#tbRooms {
+    margin: 10px auto;
+}
+
+#online_count_container {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+}
+
+#btnTaoPhong {
+    box-sizing: border-box;
+}
+
+.container-button {
+    margin: 10px 0;
+}

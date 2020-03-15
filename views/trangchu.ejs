@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Demo Socket IO</title>
+
+    <script src="socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var socket = io("http://localhost:8080");
+
+            $("#sendBtn").click(function() {
+                var mes = $("#mesInp").val();
+                socket.emit("client_sendMes", mes);
+            });
+            $("#mesInp").change(function(inp) {
+                console.log(inp);
+                socket.emit("client_sendMes", inp.target.value);
+            })
+        });
+    </script>
+</head>
+
+<body>
+    <div class="chatArea">
+        <input id="mesInp" type="text" placeholder="Type your messenger..">
+        <button id="sendBtn">Send</button>
+    </div>
+</body>
+
+</html>

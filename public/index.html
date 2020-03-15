@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Caro</title>
+    <!-- p5js -->
+    <script src="lib/p5.min.js"></script>
+    <!-- JQuery -->
+    <script src="lib/jquery-3.4.1.min.js"></script>
+    <script src="lib/jquery.hotkeys.min.js"></script>
+    <!-- Sweet alert -->
+    <script src="lib/sweetalert2.all.min.js"></script>
+    <!-- Socket.io -->
+    <script src="socket.io/socket.io.js"></script>
+    <!-- FontAwsome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://unpkg.com/popper.js"></script>
+    <!-- <script src="https://unpkg.com/tooltip.js"></script> -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <!-- My Project -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/myChatBox.css">
+    <script src="js/myChatBox.js"></script>
+    <script src="js/setup_socket.js"></script>
+    <script src="js/caro.js"></script>
+    <script src="js/main.js"></script>
+</head>
+
+<body class="bg-light">
+    <div class="before-game text-center">
+        <div class="bg-light">
+            <h2>
+                Caro Online
+            </h2>
+            <h5 id="online_count_container" data-toggle="tooltip" title="Số người đang online">
+                <span class="badge badge-danger" id="online_count">
+                    <i class="fas fa-globe-americas"></i>
+                </span>
+            </h5>
+            <h4>
+                <i class="fas fa-user-secret"></i> 
+                <span id="player_name"></span>
+            </h4>
+        </div>
+
+        <div class="container-button">
+            <button class="btn btn-primary" id="btnTaoPhong">Tạo phòng</button> 
+        </div>
+    
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text purple lighten-3">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
+            <input class="form-control" id="inpSearch" type="text" placeholder="Tìm phòng, chủ phòng, thông điệp..">
+        </div>
+
+        <table class="table table-striped table-hover table-sm" id="tbRooms">
+            <thead class="thead-dark">
+                <tr>
+                    <th data-toggle="tooltip" title="Tên phòng"><i class="fas fa-hand-peace"></i></th>
+                    <th data-toggle="tooltip" title="Chủ phòng"><i class="fas fa-user-circle"></i></th>
+                    <th data-toggle="tooltip" title="Thông điệp"><i class="fas fa-comment-alt"></i></th>
+                    <th data-toggle="tooltip" title="Số người trong phòng"><i class="fas fa-users"></i></th>
+                    <th data-toggle="tooltip" title="Chức năng"><i class="fas fa-cog"></i></th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+    </div>
+    <!-- ============== Chat Box ============= -->
+    <button class="btn btn-primary rounded-0" id="btn-open-chat">
+        <i class="far fa-comments"></i>
+        <span class="badge badge-danger">2</span>
+    </button>
+    <div class="chat-container">
+        <div class="chat-header rounded">
+            <div class="btn-group" id="btns-choose-conv">
+                <button type="button" class="btn btn-primary rounded-0 active" data-conv="conv-world" title="Tin nhắn bên ngoài">
+                    Thế giới
+                    <span class="badge badge-danger">4</span>
+                </button>
+                <button type="button" class="btn btn-primary rounded-0" data-conv="conv-room" title="Tin nhắn trong phòng">
+                    Phòng
+                    <span class="badge badge-danger">2</span>
+                </button>
+            </div>
+            <button type="button" class="btn btn-danger rounded-0 float-right" title="Ẩn khung tin nhắn" id="btn-close-chat">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        <div class="conversation-container">
+            <div class="conversation active" id="conv-world"></div>
+            <div class="conversation" id="conv-room"></div>
+        </div>
+        <div class="chat-footer rounded-bottom">
+            <div class="input-group">
+                <input class="form-control" placeholder="Nhập để gửi tin nhắn..." id="input-message">
+                <div class="input-group-append">
+                    <button class="btn btn-light border rounded-0" type="button" title="Cảm xúc Emoji" id="btn-emoji-picker">
+                        <i class="far fa-smile fa-lg"></i>
+                    </button>
+                    <button class="btn btn-success rounded-0" type="submit" title="Gửi" id="btn-send-message">
+                        <i class="fa fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="composer-popover" id="emoji-picker">
+                <div class="emoji-picker-container">
+                    <div class="composer-popover-header">
+                        <input class="emoji-input-search" placeholder="Tìm kiếm..." value="">
+                    </div>
+                    <div class="composer-popover-body-container noselect">
+                        <div class="composer-popover-body">
+                            <div class="emoji-picker-groups">
+                                <div class="emoji-picker-group" id="frequently-used"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="composer-popover-caret"></div>
+            </div>
+        </div>
+    </div>
+    <!-- ============= Game ================== -->
+    <div class="game">
+        <div class="control-game">
+            <button id="btnNewGame" data-toggle="tooltip" title="Ván mới">
+                <i class="far fa-sticky-note"></i>
+            </button>
+            <button id="btnUndoGame" data-toggle="tooltip" title="Đánh lại">
+                <i class="fas fa-undo-alt"></i>
+            </button>
+            <button id="btnFocusPreMove" data-toggle="tooltip" title="Tới vị trí quân cờ vừa đánh">
+                <i class="fas fa-bullseye"></i>
+            </button>
+            <button id="btnSwitchTheme" data-toggle="tooltip" title="Chuyển giao diện">
+                <i class="far fa-eye"></i>
+            </button>
+            <button id="btnLeaveRoom" data-toggle="tooltip" title="Rời phòng">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+        <div class="turn">
+            Lượt của <span id="turnName"></span>
+        </div>
+        <div id="cnv"></div>
+    </div>
+</body>
+
+</html>
