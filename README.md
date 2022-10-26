@@ -1,5 +1,7 @@
 # Caro Online Game
 
+Donate? Muốn hỗ trợ mình 1 ly cafe <3 [Donate here](https://github.com/HoangTran0410/HoangTran0410/blob/main/DONATE.md)
+
 Multiplayer game made with [NodeJs](https://nodejs.org/en/), [Socket.io](https://socket.io/) and [p5.js](https://p5js.org/)
 
 Link: [Play](https://carop5js.herokuapp.com/) now (vietnamese)
